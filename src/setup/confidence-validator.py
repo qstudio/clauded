@@ -274,7 +274,7 @@ def main():
         debug_log(f"Confidence {confidence_pct}% meets threshold, allowing prompt")
         
         # Show user the confidence validation passed
-        print(f"✅ 🎯 Confidence: {confidence_pct}% (meets {min_confidence}% threshold)")
+        print(f"\n✅ 🎯 Confidence: {confidence_pct}% 🎯 (meets {min_confidence}% threshold)\n")
         sys.exit(0)
 
     except json.JSONDecodeError as e:
