@@ -199,21 +199,30 @@ def main():
         if verbose:
             reasons = []
             
-            # Analyze factors that influenced confidence
+            # Analyze factors that influenced confidence with meaningful context
             if len(tool_calls) > 0:
-                reasons.append(f"• Tool usage: {len(tool_calls)} tool calls")
+                if len(tool_calls) == 1:
+                    reasons.append("• Taking concrete action with tool usage")
+                else:
+                    reasons.append(f"• Performing {len(tool_calls)} operations systematically")
             
             response_lower = response_content.lower()
             if any(word in response_lower for word in ['successfully', 'completed', 'working', 'fixed']):
-                reasons.append("• Success indicators: working")
+                reasons.append("• Expressing completion or success")
             
             if any(word in response_lower for word in ['might', 'maybe', 'possibly', 'not sure']):
-                reasons.append("• Uncertainty markers detected")
+                reasons.append("• Contains uncertainty language")
+            
+            if any(word in response_lower for word in ['error', 'failed', 'problem', 'issue']):
+                reasons.append("• Discussing problems or failures")
             
             if len(response_content) > 500:
-                reasons.append("• Detailed response (high information)")
+                reasons.append("• Providing comprehensive explanation")
             elif len(response_content) < 50:
-                reasons.append(f"• Short response ({len(response_content)} chars)")
+                reasons.append("• Very brief response may lack detail")
+            
+            if re.search(r'confidence:\s*\d+%', response_content.lower()):
+                reasons.append("• Includes explicit confidence assessment")
             
             if reasons:
                 confidence_msg += f"\nBased on:  {' '.join(reasons)}"
