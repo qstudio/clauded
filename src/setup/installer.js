@@ -119,7 +119,7 @@ async function ensureDirectories() {
 
 async function installUnifiedPromptHook(_config) {
   const hookPath = path.join(CLAUDED_DIR, 'hooks', 'confidence-unified-prompt.py');
-  const sourcePath = path.join(process.cwd(), 'src', 'setup', 'confidence-unified-prompt.py');
+  const sourcePath = path.join(path.dirname(new URL(import.meta.url).pathname), 'confidence-unified-prompt.py');
   
   try {
     await fs.copyFile(sourcePath, hookPath);
@@ -132,7 +132,7 @@ async function installUnifiedPromptHook(_config) {
 
 async function installUnifiedPostToolHook() {
   const hookPath = path.join(CLAUDED_DIR, 'hooks', 'confidence-unified-posttool.py');
-  const sourcePath = path.join(process.cwd(), 'src', 'setup', 'confidence-unified-posttool.py');
+  const sourcePath = path.join(path.dirname(new URL(import.meta.url).pathname), 'confidence-unified-posttool.py');
   
   try {
     await fs.copyFile(sourcePath, hookPath);
@@ -145,7 +145,7 @@ async function installUnifiedPostToolHook() {
 
 async function installConfidenceNotificationHook() {
   const hookPath = path.join(CLAUDED_DIR, 'hooks', 'confidence-notification-hook.py');
-  const sourcePath = path.join(process.cwd(), 'src', 'setup', 'confidence-notification-hook.py');
+  const sourcePath = path.join(path.dirname(new URL(import.meta.url).pathname), 'confidence-notification-hook.py');
   
   try {
     // Copy the notification hook file

@@ -227,21 +227,8 @@ def main():
         # Check if this is a meaningful response that warrants a confidence score
         response_lower = response.lower()
         
-        # Skip trivial responses
-        trivial_patterns = [
-            r'^(yes|no)\.?$',
-            r'^(ok|okay)\.?$',
-            r'^(thanks?|thank you)\.?$',
-            r'^[^a-zA-Z]*$'  # Only punctuation/numbers
-        ]
-        
-        for pattern in trivial_patterns:
-            if re.match(pattern, response_lower.strip()):
-                debug_log("Detected trivial response, allowing without confidence display")
-                sys.exit(0)
-        
-        # Skip if response is too short to be meaningful
-        if len(response.strip()) < 20:
+        # Only skip completely empty responses
+        if len(response.strip()) < 3:
             debug_log("Response too short for confidence scoring")
             sys.exit(0)
         

@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/ray/.claude/clauded/hooks/confidence-validator.py"
+            "command": "/Users/ray/.claude/clauded/hooks/confidence-unified-prompt.py"
           }
         ]
       }
