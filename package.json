@@ -40,5 +40,19 @@
   },
   "engines": {
     "node": ">=16.0.0"
-  }
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mrrxwyz/clauded.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mrrxwyz/clauded/issues"
+  },
+  "homepage": "https://github.com/mrrxwyz/clauded#readme"
 }

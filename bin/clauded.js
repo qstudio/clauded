@@ -1,11 +1,10 @@
 #!/usr/bin/env node
-// High-risk test modification for confidence validation
 
 import { program } from 'commander';
 import chalk from 'chalk';
 import { setupWizard } from '../src/setup/wizard.js';
 import { uninstall } from '../src/setup/installer.js';
-import { setConfidenceLevel, setVerboseMode, getVerboseMode, DEBUG_LOG } from '../src/confidence-manager.js';
+import { setConfidenceLevel, setVerboseMode, DEBUG_LOG } from '../src/confidence-manager.js';
 import { readFileSync, existsSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
