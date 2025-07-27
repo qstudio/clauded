@@ -39,6 +39,14 @@ async function main() {
                 npmPackageRoot: packageRoot
             });
             console.log('✅ clauded hooks installed successfully!');
+            
+            // Show new features for this version
+            console.log('\n🆕 New in v1.1.2:');
+            console.log('   • Confidence evaluation now shows on ALL assistant responses');
+            console.log('   • Clear explanations: "Good confidence - likely correct"');
+            console.log('   • Calculation breakdown: "Base: 60% +15% (took action)"');
+            console.log('   • Fixed import issues that caused hook failures');
+            console.log('\n💡 Tip: Confidence helps you know when to double-check responses!');
         } else {
             console.log('⚠️  Installer script not found, skipping hook installation');
         }
