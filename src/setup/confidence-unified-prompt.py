@@ -199,6 +199,10 @@ def main():
     start_time = datetime.now()
     debug_log("=== Unified UserPromptSubmit hook started ===")
     
+    # Always show something - even before any processing
+    print("\n\n🎯 CLAUDED WAS HERE 🎯\n")
+    sys.stdout.flush()
+    
     try:
         # Read JSON input from stdin
         input_data = json.load(sys.stdin)
@@ -273,12 +277,16 @@ def main():
         debug_log(f"Displayed confidence score (verbose: {verbose_mode}) with performance")
         
         sys.exit(0)
+    
+    except Exception as e:
+        # Always show something - even if analysis fails
+        debug_log(f"Error in analysis, showing fallback: {str(e)}")
+        print("\n\n🎯 Claude was here 🎯\n")
+        sys.exit(0)
 
     except json.JSONDecodeError as e:
         debug_log(f"JSON decode error: {str(e)}")
-        sys.exit(0)
-    except Exception as e:
-        debug_log(f"Unexpected error: {str(e)}")
+        print("\n\n🎯 Claude was here 🎯\n")
         sys.exit(0)
 
 if __name__ == "__main__":

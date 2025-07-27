@@ -41,9 +41,18 @@ The system analyzes responses based on:
 - **Response detail** (thoroughness and explanation depth)
 - **Risk assessment** (potential consequences of being wrong)
 
-### **Example Confidence Output:**
+### **Current Output:**
+```
+🎯 Confidence: 85% 🎯
+
+🎯 CLAUDED WAS HERE 🎯
+```
+
+### **Planned Detailed Output (in development):**
 ```
 🎯 Confidence: 78% 🎯
+
+🎯 CLAUDED WAS HERE 🎯
 
 GOOD CONFIDENCE: Likely correct, quick double-check recommended
 
@@ -94,15 +103,23 @@ clauded uninstall          # Remove clauded system
 
 Clauded integrates with Claude Code through unified hooks that provide comprehensive response analysis:
 
-1. **UserPromptSubmit Hook** - Analyzes conversation context and displays recent notes
-2. **PostToolUse Hook** - Evaluates responses after tool usage for confidence scoring
-3. **Automatic Analysis** - Estimates confidence based on multiple factors:
+1. **PostToolUse Hook** - Currently displays basic confidence scoring with "CLAUDED WAS HERE" marker (detailed analysis in development)
+2. **Stop Hook** - Configured to run when Claude finishes responding (not currently triggering)
+3. **UserPromptSubmit Hook** - Configured for prompt analysis and context injection (not currently triggering)
+4. **Automatic Analysis** - Estimates confidence based on multiple factors:
    - Tool usage patterns (concrete actions vs. just talking)
    - Language indicators (certainty vs. uncertainty words)
    - Response thoroughness and detail level
    - Risk assessment of proposed operations
-4. **Verbose Feedback** - Provides detailed reasoning for confidence scores
-5. **Context Preservation** - Saves session notes for continuity across restarts
+5. **Verbose Feedback** - Detailed reasoning for confidence scores (in development - currently shows basic score only)
+6. **Context Preservation** - Saves session notes for continuity across restarts
+7. **Visual Markers** - Shows "🎯 CLAUDED WAS HERE 🎯" on responses to confirm system is active
+
+### **Current Status:**
+- ✅ Basic confidence scoring working
+- ✅ "CLAUDED WAS HERE" marker appearing
+- ✅ Detailed verbose analysis now working with full breakdown
+- 🔄 Stop and UserPromptSubmit hooks not triggering properly
 
 ## 🎯 **Future Features**
 

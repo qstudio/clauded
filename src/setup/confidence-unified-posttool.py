@@ -37,6 +37,53 @@ def get_config():
     """Load configuration settings with caching"""
     return get_cached_config()
 
+def get_last_assistant_response(transcript_path):
+    """Extract the last assistant response from transcript"""
+    debug_log(f"Reading transcript from: {transcript_path}")
+    try:
+        with open(transcript_path, 'r') as f:
+            lines = f.readlines()
+        
+        debug_log(f"Transcript has {len(lines)} lines")
+        
+        # Find the last assistant message
+        for line in reversed(lines):
+            try:
+                entry = json.loads(line.strip())
+                if (entry.get('type') == 'assistant' and 
+                    entry.get('message', {}).get('role') == 'assistant'):
+                    content = entry.get('message', {}).get('content', '')
+                    if content:
+                        debug_log("Found assistant response with content")
+                        # Handle both string and list formats - always return string
+                        if isinstance(content, list):
+                            # Extract text from list of content blocks
+                            text_parts = []
+                            for block in content:
+                                if isinstance(block, dict) and block.get('type') == 'text':
+                                    text_parts.append(block.get('text', ''))
+                                elif isinstance(block, str):
+                                    text_parts.append(block)
+                            result = '\n'.join(text_parts)
+                            debug_log(f"Extracted text from list content: {len(result)} chars")
+                            return result if result else None
+                        elif isinstance(content, str):
+                            debug_log(f"Found string content: {len(content)} chars")
+                            return content
+                        else:
+                            # Convert any other type to string
+                            result = str(content)
+                            debug_log(f"Converted content to string: {len(result)} chars")
+                            return result
+            except json.JSONDecodeError:
+                continue
+        
+        debug_log("No valid assistant response found")
+        return None
+    except Exception as e:
+        debug_log(f"Error reading transcript: {str(e)}")
+        return None
+
 def contains_suggestions(response_content, tool_calls):
     """Check if response contains suggestions, recommendations, or code changes"""
     debug_log(f"Analyzing response with {len(tool_calls)} tool calls")
@@ -146,24 +193,28 @@ def main():
         # Read JSON input from stdin
         input_data = json.load(sys.stdin)
         debug_log(f"Received input: {list(input_data.keys())}")
+        debug_log(f"Full input data: {input_data}")
         
         # Get configuration
         config = get_config()
         min_confidence = config.get('minConfidence', 50)
         
-        # Extract response and tool calls
-        response = input_data.get('response', {})
-        tool_calls = input_data.get('tool_calls', [])
+        # PostToolUse hook gets individual tool info, not full tool_calls array
+        tool_name = input_data.get('tool_name', '')
+        tool_calls = [{'name': tool_name}] if tool_name else []
+        debug_log(f"Single tool call detected: {tool_name}")
         
-        # Get response content
-        response_content = response.get('content', '')
-        if isinstance(response_content, list):
-            # Handle list format - extract text
-            text_parts = []
-            for block in response_content:
-                if isinstance(block, dict) and block.get('type') == 'text':
-                    text_parts.append(block.get('text', ''))
-            response_content = '\n'.join(text_parts)
+        # PostToolUse hook doesn't get response content directly
+        # Need to read it from the transcript
+        transcript_path = input_data.get('transcript_path')
+        response_content = ""
+        
+        if transcript_path:
+            response_content = get_last_assistant_response(transcript_path)
+            debug_log(f"Extracted response from transcript: {len(response_content) if response_content else 0} chars")
+        
+        if not response_content:
+            response_content = ""
         
         debug_log(f"Response content length: {len(response_content)}")
         debug_log(f"Tool calls count: {len(tool_calls)}")
@@ -194,9 +245,9 @@ def main():
         # Create confidence display message with verbose details
         confidence_msg = f"🎯 Confidence: {estimated_confidence}% 🎯"
         
-        # Add verbose reasoning if enabled
+        # Add verbose reasoning - always enabled by default
         verbose = get_verbose_mode()
-        if verbose:
+        if True:  # Force verbose mode to always be on
             # Detailed analysis of why this confidence score
             analysis = []
             
@@ -251,6 +302,8 @@ def main():
                 interpretation = "LOW CONFIDENCE: High chance of errors, definitely double-check"
             
             confidence_msg += f"\n\n{interpretation}\n" + "\n".join(analysis)
+            debug_log(f"Analysis items: {len(analysis)}, verbose: {verbose}")
+            debug_log(f"Final confidence_msg length: {len(confidence_msg)}")
         
         # Add risk level if medium/high
         if risk_level in ['medium', 'high']:

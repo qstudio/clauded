@@ -1,0 +1,29 @@
+CLAUDED HOOK DEBUG TEST
+========================
+
+Test 1: Basic file creation
+- Created this test file to debug hook functionality
+- Should trigger PostToolUse hook with Write tool
+
+Expected: Verbose confidence breakdown showing:
+- ACTIONS: Used tools (Write)
+- LANGUAGE: Analysis of this text
+- DETAIL: Character count analysis
+- RISK: Risk assessment
+
+Current Result: Only basic confidence + CLAUDED WAS HERE
+
+Test 2: File edit operation
+- Now editing the file to add this line
+- This should definitely trigger PostToolUse with Edit tool
+- Let's see if verbose analysis appears now
+
+Test 3: With enhanced debugging
+- Added debug logging to see full input data structure
+- This edit should show us what keys the hook receives
+- Goal: Fix data extraction to get verbose analysis working
+
+Test 4: With transcript reading
+- Now the hook reads response content from transcript
+- Fixed tool_calls extraction for PostToolUse hook
+- This should finally show verbose confidence analysis!

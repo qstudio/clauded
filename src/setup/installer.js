@@ -92,7 +92,7 @@ export async function installClaudedSystem(config) {
     
     // Install unified hooks (consolidates 4 hooks into 2 for better performance)
     await installUnifiedPromptHook(config);
-    await installUnifiedPostToolHook();
+    await installUnifiedPostToolHook(config);
     
     // Install clauded command script
     await installClaudedCommand();
@@ -112,36 +112,106 @@ export async function installClaudedSystem(config) {
   }
 }
 
+export async function installClauded(options = {}) {
+  const { forceUpdate = false, npmPackageRoot = null } = options;
+  
+  // Determine if we're in development mode or production mode
+  const isDevelopment = !npmPackageRoot && !process.cwd().includes('node_modules');
+  
+  console.log(chalk.cyan(`🔧 Installing clauded in ${isDevelopment ? 'development' : 'production'} mode...`));
+  
+  if (isDevelopment) {
+    console.log(chalk.gray('   Using local development files with symlinks'));
+  } else {
+    console.log(chalk.gray('   Using installed package files with copies'));
+  }
+  
+  const config = {
+    npmPackageRoot,
+    isDevelopment,
+    forceUpdate
+  };
+  
+  await installClaudedSystem(config);
+}
+
 async function ensureDirectories() {
   await fs.mkdir(path.join(CLAUDED_DIR, 'hooks'), { recursive: true });
   await fs.mkdir(path.join(CLAUDED_DIR, 'scripts'), { recursive: true });
 }
 
-async function installUnifiedPromptHook(_config) {
+async function installUnifiedPromptHook(config) {
   const hookPath = path.join(CLAUDED_DIR, 'hooks', 'confidence-unified-prompt.py');
-  const sourcePath = path.join(path.dirname(new URL(import.meta.url).pathname), 'confidence-unified-prompt.py');
   const configCachePath = path.join(CLAUDED_DIR, 'hooks', 'config-cache.py');
-  const configCacheSource = path.join(path.dirname(new URL(import.meta.url).pathname), 'config-cache.py');
+  
+  // Determine source paths based on installation mode
+  let sourcePath, configCacheSource;
+  
+  if (config.npmPackageRoot) {
+    // Production mode: use npmPackageRoot
+    sourcePath = path.join(config.npmPackageRoot, 'src/setup', 'confidence-unified-prompt.py');
+    configCacheSource = path.join(config.npmPackageRoot, 'src/setup', 'config-cache.py');
+  } else {
+    // Development mode: use current script location
+    sourcePath = path.join(path.dirname(new URL(import.meta.url).pathname), 'confidence-unified-prompt.py');
+    configCacheSource = path.join(path.dirname(new URL(import.meta.url).pathname), 'config-cache.py');
+  }
   
   try {
-    await fs.copyFile(sourcePath, hookPath);
-    await fs.chmod(hookPath, 0o755); // Make executable
-    await fs.copyFile(configCacheSource, configCachePath);
-    await fs.chmod(configCachePath, 0o755); // Make executable
-    console.log(chalk.green('✓ Installed unified prompt hook (UserPromptSubmit)'));
+    if (config.isDevelopment) {
+      // Development mode: create symlinks for easier testing
+      try {
+        await fs.unlink(hookPath);
+        await fs.unlink(configCachePath);
+      } catch (e) {
+        // Files don't exist, that's ok
+      }
+      await fs.symlink(sourcePath, hookPath);
+      await fs.symlink(configCacheSource, configCachePath);
+      console.log(chalk.green('✓ Symlinked unified prompt hook (UserPromptSubmit) for development'));
+    } else {
+      // Production mode: copy files
+      await fs.copyFile(sourcePath, hookPath);
+      await fs.chmod(hookPath, 0o755); // Make executable
+      await fs.copyFile(configCacheSource, configCachePath);
+      await fs.chmod(configCachePath, 0o755); // Make executable
+      console.log(chalk.green('✓ Installed unified prompt hook (UserPromptSubmit)'));
+    }
   } catch (error) {
     throw new Error(`Failed to install unified prompt hook: ${error.message}`);
   }
 }
 
-async function installUnifiedPostToolHook() {
+async function installUnifiedPostToolHook(config) {
   const hookPath = path.join(CLAUDED_DIR, 'hooks', 'confidence-unified-posttool.py');
-  const sourcePath = path.join(path.dirname(new URL(import.meta.url).pathname), 'confidence-unified-posttool.py');
+  
+  // Determine source path based on installation mode
+  let sourcePath;
+  
+  if (config.npmPackageRoot) {
+    // Production mode: use npmPackageRoot
+    sourcePath = path.join(config.npmPackageRoot, 'src/setup', 'confidence-unified-posttool.py');
+  } else {
+    // Development mode: use current script location
+    sourcePath = path.join(path.dirname(new URL(import.meta.url).pathname), 'confidence-unified-posttool.py');
+  }
   
   try {
-    await fs.copyFile(sourcePath, hookPath);
-    await fs.chmod(hookPath, 0o755); // Make executable
-    console.log(chalk.green('✓ Installed unified PostToolUse hook'));
+    if (config.isDevelopment) {
+      // Development mode: create symlink for easier testing
+      try {
+        await fs.unlink(hookPath);
+      } catch (e) {
+        // File doesn't exist, that's ok
+      }
+      await fs.symlink(sourcePath, hookPath);
+      console.log(chalk.green('✓ Symlinked unified PostToolUse hook for development'));
+    } else {
+      // Production mode: copy file
+      await fs.copyFile(sourcePath, hookPath);
+      await fs.chmod(hookPath, 0o755); // Make executable
+      console.log(chalk.green('✓ Installed unified PostToolUse hook'));
+    }
   } catch (error) {
     throw new Error(`Failed to install unified PostToolUse hook: ${error.message}`);
   }
@@ -210,6 +280,7 @@ async function updateClaudeSettings() {
     const scorerPath = path.join(homedir(), '.claude', 'clauded', 'hooks', 'confidence-scorer.py');
     const displayPath = path.join(homedir(), '.claude', 'clauded', 'hooks', 'confidence-score-display.py');
     const unifiedPath = path.join(homedir(), '.claude', 'clauded', 'hooks', 'confidence-unified-prompt.py');
+    const postToolPath = path.join(homedir(), '.claude', 'clauded', 'hooks', 'confidence-unified-posttool.py');
     
     // Remove old hooks from UserPromptSubmit
     const oldHookPaths = [validatorPath, displayPath];
@@ -230,6 +301,13 @@ async function updateClaudeSettings() {
     const existingUnifiedHook = settings.hooks.UserPromptSubmit.find(hookGroup => 
       hookGroup.hooks && hookGroup.hooks.some(hook => 
         hook.command === unifiedPath
+      )
+    );
+    
+    // Check if PostToolUse hook is already registered
+    const existingPostToolHook = settings.hooks.PostToolUse.find(hookGroup => 
+      hookGroup.hooks && hookGroup.hooks.some(hook => 
+        hook.command === postToolPath
       )
     );
     
@@ -256,6 +334,21 @@ async function updateClaudeSettings() {
       console.log('✅ Unified confidence hook added to UserPromptSubmit');
     } else {
       console.log('✅ Unified confidence hook already registered');
+    }
+    
+    if (!existingPostToolHook) {
+      // Add unified PostToolUse hook
+      settings.hooks.PostToolUse.push({
+        hooks: [
+          {
+            type: 'command',
+            command: postToolPath
+          }
+        ]
+      });
+      console.log('✅ Unified PostToolUse hook added');
+    } else {
+      console.log('✅ Unified PostToolUse hook already registered');
     }
     
     if (!existingNotificationHook) {

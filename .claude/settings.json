@@ -1,0 +1,22 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "type": "command",
+        "command": "./src/setup/confidence-unified-prompt.py"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "type": "command",
+        "command": "./src/setup/confidence-unified-posttool.py"
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "type": "command",
+        "command": "./src/setup/confidence-unified-prompt.py"
+      }
+    ]
+  }
+}
