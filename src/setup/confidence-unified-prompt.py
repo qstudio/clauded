@@ -25,7 +25,13 @@ def debug_log(message):
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from config_cache import get_cached_config, get_min_confidence, get_verbose_mode
+import importlib.util
+spec = importlib.util.spec_from_file_location("config_cache", os.path.join(os.path.dirname(os.path.abspath(__file__)), "config-cache.py"))
+config_cache = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(config_cache)
+get_cached_config = config_cache.get_cached_config
+get_min_confidence = config_cache.get_min_confidence
+get_verbose_mode = config_cache.get_verbose_mode
 
 def get_config():
     """Load configuration settings with caching"""

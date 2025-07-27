@@ -25,7 +25,13 @@ def debug_log(message):
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from config_cache import get_cached_config, get_min_confidence, get_verbose_mode
+import importlib.util
+spec = importlib.util.spec_from_file_location("config_cache", os.path.join(os.path.dirname(os.path.abspath(__file__)), "config-cache.py"))
+config_cache = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(config_cache)
+get_cached_config = config_cache.get_cached_config
+get_min_confidence = config_cache.get_min_confidence
+get_verbose_mode = config_cache.get_verbose_mode
 
 def get_config():
     """Load configuration settings with caching"""
@@ -172,10 +178,8 @@ def main():
             debug_log("Confidence already present, skipping")
             sys.exit(0)
         
-        # Check if response contains suggestions or changes
-        if not contains_suggestions(response_content, tool_calls):
-            debug_log("No suggestions or changes detected, skipping")
-            sys.exit(0)
+        # Always show confidence for all responses
+        debug_log("Processing response for confidence display")
         
         debug_log("Suggestions/changes detected, proceeding with analysis")
         
@@ -183,25 +187,54 @@ def main():
         risk_level = assess_risk_level(response_content, tool_calls)
         debug_log(f"Assessed risk level: {risk_level}")
         
-        # For high-risk operations, require mandatory confidence
-        if risk_level == 'high':
-            # Estimate confidence for comparison
-            estimated_confidence = estimate_confidence(response_content, tool_calls, config)
+        # Estimate confidence for all responses
+        estimated_confidence = estimate_confidence(response_content, tool_calls, config)
+        debug_log(f"Estimated confidence: {estimated_confidence}%")
+        
+        # Create confidence display message with verbose details
+        confidence_msg = f"🎯 Confidence: {estimated_confidence}% 🎯"
+        
+        # Add verbose reasoning if enabled
+        verbose = get_verbose_mode()
+        if verbose:
+            reasons = []
             
-            if estimated_confidence < min_confidence:
-                output = {
-                    "decision": "block",
-                    "reason": f"🎯 **MANDATORY CONFIDENCE REQUIRED**\n\nThis operation involves high-risk changes (file edits, system commands, deletions).\n\n**Please add explicit confidence to your response:**\n`Confidence: X% - [your reasoning]`\n\n**Then submit your response again.**"
-                }
-                print(json.dumps(output))
-                sys.exit(1)
+            # Analyze factors that influenced confidence
+            if len(tool_calls) > 0:
+                reasons.append(f"• Tool usage: {len(tool_calls)} tool calls")
+            
+            response_lower = response_content.lower()
+            if any(word in response_lower for word in ['successfully', 'completed', 'working', 'fixed']):
+                reasons.append("• Success indicators: working")
+            
+            if any(word in response_lower for word in ['might', 'maybe', 'possibly', 'not sure']):
+                reasons.append("• Uncertainty markers detected")
+            
+            if len(response_content) > 500:
+                reasons.append("• Detailed response (high information)")
+            elif len(response_content) < 50:
+                reasons.append(f"• Short response ({len(response_content)} chars)")
+            
+            if reasons:
+                confidence_msg += f"\nBased on:  {' '.join(reasons)}"
         
-        # For medium/low risk, just log the analysis
-        debug_log(f"Operation approved - risk level: {risk_level}")
+        # Add risk level if medium/high
+        if risk_level in ['medium', 'high']:
+            confidence_msg += f" (Risk: {risk_level})"
         
-        # Standard approval
+        # For high-risk operations with low confidence, still block
+        if risk_level == 'high' and estimated_confidence < min_confidence:
+            output = {
+                "decision": "block",
+                "reason": f"🎯 **MANDATORY CONFIDENCE REQUIRED**\n\nThis operation involves high-risk changes (file edits, system commands, deletions).\n\n**Please add explicit confidence to your response:**\n`Confidence: X% - [your reasoning]`\n\n**Then submit your response again.**"
+            }
+            print(json.dumps(output))
+            sys.exit(1)
+        
+        # Standard approval with confidence display
         output = {
-            "decision": "approve"
+            "decision": "approve",
+            "append_message": confidence_msg
         }
         
         print(json.dumps(output))
