@@ -70,6 +70,63 @@ export async function setConfidenceLevel(level) {
   }
 }
 
+export async function setVerboseMode(enabled) {
+  try {
+    await debugLog(`Setting verbose mode to ${enabled}`);
+    
+    // Ensure config directory exists
+    await fs.mkdir(CLAUDE_DIR, { recursive: true });
+
+    // Read existing config or create new one
+    let config = {};
+    try {
+      const content = await fs.readFile(CONFIG_FILE, 'utf8');
+      config = JSON.parse(content);
+      await debugLog(`Loaded existing config: ${JSON.stringify(config)}`);
+    } catch (error) {
+      // Config file doesn't exist, start with defaults
+      await debugLog('No existing config found, starting fresh');
+      config = { minConfidence: 50 }; // Set default
+    }
+
+    // Update verbose setting
+    config.verbose = enabled;
+
+    // Write config
+    await fs.writeFile(CONFIG_FILE, JSON.stringify(config, null, 2));
+    await debugLog('Updated config file with verbose setting');
+
+    const status = enabled ? 'enabled' : 'disabled';
+    console.log(chalk.green(`✓ Verbose output ${status}`));
+    
+    if (enabled) {
+      console.log(chalk.cyan('📊 Verbose mode will show:'));
+      console.log(chalk.gray('   • Hook processing times'));
+      console.log(chalk.gray('   • Confidence calculation details'));
+      console.log(chalk.gray('   • System overhead metrics'));
+      console.log(chalk.gray('   • Token usage estimates'));
+    }
+
+  } catch (error) {
+    await debugLog(`ERROR setting verbose mode: ${error.message}`);
+    console.error(chalk.red('Error setting verbose mode:'), error.message);
+    process.exit(1);
+  }
+}
+
+export async function getVerboseMode() {
+  try {
+    const content = await fs.readFile(CONFIG_FILE, 'utf8');
+    const config = JSON.parse(content);
+    const verbose = config.verbose !== undefined ? config.verbose : true; // Default to true
+    await debugLog(`Retrieved verbose mode: ${verbose}`);
+    return verbose;
+  } catch (error) {
+    await debugLog('No config found, using default verbose mode: true');
+    return true; // Default if config doesn't exist
+  }
+}
+
 export async function getConfidenceLevel() {
   try {
     const content = await fs.readFile(CONFIG_FILE, 'utf8');

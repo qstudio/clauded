@@ -4,7 +4,7 @@ import { program } from 'commander';
 import chalk from 'chalk';
 import { setupWizard } from '../src/setup/wizard.js';
 import { uninstall } from '../src/setup/installer.js';
-import { setConfidenceLevel, DEBUG_LOG } from '../src/confidence-manager.js';
+import { setConfidenceLevel, setVerboseMode, getVerboseMode, DEBUG_LOG } from '../src/confidence-manager.js';
 import { readFileSync, existsSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -59,6 +59,18 @@ program
       process.exit(1);
     }
     await setConfidenceLevel(confidenceLevel);
+  });
+
+program
+  .command('verbose <enabled>')
+  .description('Enable or disable verbose output (true/false)')
+  .action(async (enabled) => {
+    const enabledLower = enabled.toLowerCase();
+    if (enabledLower !== 'true' && enabledLower !== 'false') {
+      console.error(chalk.red('Error: Verbose setting must be "true" or "false"'));
+      process.exit(1);
+    }
+    await setVerboseMode(enabledLower === 'true');
   });
 
 program
