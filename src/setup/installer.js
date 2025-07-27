@@ -120,10 +120,14 @@ async function ensureDirectories() {
 async function installUnifiedPromptHook(_config) {
   const hookPath = path.join(CLAUDED_DIR, 'hooks', 'confidence-unified-prompt.py');
   const sourcePath = path.join(path.dirname(new URL(import.meta.url).pathname), 'confidence-unified-prompt.py');
+  const configCachePath = path.join(CLAUDED_DIR, 'hooks', 'config-cache.py');
+  const configCacheSource = path.join(path.dirname(new URL(import.meta.url).pathname), 'config-cache.py');
   
   try {
     await fs.copyFile(sourcePath, hookPath);
     await fs.chmod(hookPath, 0o755); // Make executable
+    await fs.copyFile(configCacheSource, configCachePath);
+    await fs.chmod(configCachePath, 0o755); // Make executable
     console.log(chalk.green('✓ Installed unified prompt hook (UserPromptSubmit)'));
   } catch (error) {
     throw new Error(`Failed to install unified prompt hook: ${error.message}`);
