@@ -5,6 +5,7 @@ import chalk from 'chalk';
 import { setupWizard } from '../src/setup/wizard.js';
 import { uninstall } from '../src/setup/installer.js';
 import { setConfidenceLevel, setVerboseMode, DEBUG_LOG } from '../src/confidence-manager.js';
+import { addNote, addRestartNote, displayRecentNotes, listAllNotes, clearNotes } from '../src/notes-manager.js';
 import { readFileSync, existsSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -52,8 +53,19 @@ program
 program
   .command('restart')
   .description('Restart Claude session in same window')
-  .action(async () => {
+  .option('-m, --message <text>', 'Add a custom context note before restarting')
+  .action(async (options) => {
     console.log(chalk.yellow('🔄 Restarting Claude session...'));
+    
+    // Display recent notes before restart
+    console.log(chalk.cyan.bold('Context before restart:'));
+    displayRecentNotes(3);
+    
+    // Add restart note with context
+    addRestartNote(options.message);
+    
+    // Give user a moment to see the context
+    await new Promise(resolve => setTimeout(resolve, 2000));
     
     // Kill current Claude process if running
     try {
@@ -67,7 +79,7 @@ program
     // Restart Claude in same window
     try {
       const { spawn } = await import('child_process');
-      const claude = spawn('claude', [], {
+      spawn('claude', [], {
         stdio: 'inherit',
         detached: false
       });
@@ -76,6 +88,8 @@ program
       process.exit(0);
     } catch (error) {
       console.error(chalk.red('❌ Failed to restart Claude:', error.message));
+      console.log(chalk.yellow('💡 Make sure Claude CLI is installed and in your PATH'));
+      console.log(chalk.gray('   Try running: npm install -g @anthropic/claude-cli'));
       process.exit(1);
     }
   });
@@ -177,9 +191,36 @@ program
     }
   });
 
-// Default action - run setup
+program
+  .command('note')
+  .description('Manage session notes')
+  .option('-m, --message <text>', 'Add a note with the given message')
+  .option('-l, --list', 'List all notes')
+  .option('-c, --clear', 'Clear all notes')
+  .action(async (options) => {
+    if (options.message) {
+      addNote(options.message);
+    } else if (options.list) {
+      listAllNotes();
+    } else if (options.clear) {
+      clearNotes();
+    } else {
+      console.log(chalk.yellow('Use -m to add a note, -l to list notes, or -c to clear notes'));
+      console.log(chalk.gray('Example: clauded note -m "Working on the API endpoints"'));
+    }
+  });
+
+program
+  .command('notes')
+  .description('List all notes')
+  .action(async () => {
+    listAllNotes();
+  });
+
+// Default action - show recent notes and run setup
 program
   .action(async () => {
+    displayRecentNotes();
     await setupWizard();
   });
 

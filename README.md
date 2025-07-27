@@ -20,20 +20,37 @@ Clauded is a **Claude Taming System** designed to make Claude more thoughtful, t
 - The system should work for **suggestions/recommendations**, not just code changes
 - It's about making Claude more **thoughtful and transparent**, not restrictive
 
-## 🚀 **Current Feature: Confidence Validation**
+## 🚀 **Key Features**
 
-The first step in the Claude Taming System is **confidence validation**. This feature:
-
+### **1. Confidence Validation**
 - **Triggers** when Claude provides suggestions, recommendations, or code changes
-- **Requires** Claude to include a confidence statement in the format: `Confidence: X% - [explanation]`
-- **Displays** the confidence evaluation to users, even when it meets the threshold
-- **Blocks** responses only when confidence is below the minimum threshold (default: 50%)
+- **Automatically estimates** confidence based on response analysis
+- **Displays** detailed confidence reasoning in verbose mode
+- **Blocks** only high-risk operations below confidence threshold
 
-### **Example Output:**
+### **2. Session Notes & Context Preservation**
+- **Save context** between Claude Code sessions with `clauded note`
+- **Auto-restart** with context preservation using `clauded restart`
+- **View recent notes** when starting clauded to remember what you were working on
+- **Timestamps and directories** help track your work history
+
+### **3. Smart Analysis**
+The system analyzes responses based on:
+- **Actions taken** (tools used, concrete steps)
+- **Language confidence** (uncertainty vs. certainty indicators)
+- **Response detail** (thoroughness and explanation depth)
+- **Risk assessment** (potential consequences of being wrong)
+
+### **Example Confidence Output:**
 ```
-🔒 **CONFIDENCE EVALUATION**
-Based on the suggestions provided, I would rate my confidence as:
-**Confidence: 75% - These suggestions follow established patterns and address common issues, though some may require testing in your specific environment.**
+🎯 Confidence: 78% 🎯
+
+GOOD CONFIDENCE: Likely correct, quick double-check recommended
+
+ACTIONS: Used tools (Edit, Read) - indicates I'm taking concrete steps rather than just talking (+15%)
+LANGUAGE: Used success words (successfully, completed) - sounds confident about outcome (+10%)
+DETAIL: Normal length (342 chars) - adequate explanation (0%)
+RISK: Medium-risk - some consequences if incorrect
 ```
 
 ## 📦 Installation
@@ -50,27 +67,42 @@ clauded setup
 clauded confidence 75  # Set minimum confidence to 75%
 ```
 
-### **View Debug Logs:**
+### **Session Notes:**
 ```bash
-clauded logs           # Show debug log contents
-clauded logs --follow  # Follow logs in real-time
-clauded logs --clear   # Clear all debug logs
+clauded note -m "Working on API endpoints"  # Add a context note
+clauded notes                               # View all notes
+clauded note -l                             # List all notes
+clauded note -c                             # Clear all notes
 ```
 
-### **Uninstall:**
+### **Smart Restart:**
 ```bash
-clauded uninstall
+clauded restart                             # Restart Claude with context preservation
+clauded restart -m "Fixed the bug"         # Restart with custom context note
+```
+
+### **System Management:**
+```bash
+clauded status --detailed   # Check system health
+clauded logs               # Show debug log contents
+clauded logs --follow      # Follow logs in real-time
+clauded logs --clear       # Clear all debug logs
+clauded uninstall          # Remove clauded system
 ```
 
 ## 🔧 How It Works
 
-Clauded integrates with Claude Code through hooks that analyze conversation context:
+Clauded integrates with Claude Code through unified hooks that provide comprehensive response analysis:
 
-1. **UserPromptSubmit Hook** - Runs when you submit a prompt to Claude
-2. **Context Analysis** - Examines the conversation for suggestions, recommendations, or code changes
-3. **Confidence Detection** - Looks for confidence statements in Claude's responses
-4. **Evaluation Display** - Shows confidence evaluation to the user
-5. **Threshold Enforcement** - Blocks responses below the minimum confidence level
+1. **UserPromptSubmit Hook** - Analyzes conversation context and displays recent notes
+2. **PostToolUse Hook** - Evaluates responses after tool usage for confidence scoring
+3. **Automatic Analysis** - Estimates confidence based on multiple factors:
+   - Tool usage patterns (concrete actions vs. just talking)
+   - Language indicators (certainty vs. uncertainty words)
+   - Response thoroughness and detail level
+   - Risk assessment of proposed operations
+4. **Verbose Feedback** - Provides detailed reasoning for confidence scores
+5. **Context Preservation** - Saves session notes for continuity across restarts
 
 ## 🎯 **Future Features**
 
