@@ -167,31 +167,25 @@ def main():
             sys.exit(1)
             
         elif risk_level == 'medium':
-            # MEDIUM RISK: Strong request for confidence
+            # MEDIUM RISK: Strong request for confidence - use approve to continue
             debug_log("Medium-risk operation detected, strongly requesting confidence")
             confidence_request = f"\n\n⚠️ 🎯 **CONFIDENCE ASSESSMENT REQUESTED**\n\nThis operation has medium risk. Please evaluate your confidence:\n**Confidence: X% - [your reasoning]**"
             
             output = {
-                "decision": "allow",
-                "hookSpecificOutput": {
-                    "hookEventName": "PostToolUse", 
-                    "additionalContext": confidence_request
-                }
+                "decision": "approve",
+                "reason": confidence_request
             }
             print(json.dumps(output))
             sys.exit(0)
             
         else:  # risk_level == 'low'
-            # LOW RISK: Optional confidence request
+            # LOW RISK: Optional confidence request - just approve
             debug_log("Low-risk operation detected, optional confidence request")
             confidence_request = f"\n\n💭 **Optional:** Consider adding confidence assessment:\n**Confidence: X% - [your reasoning]**"
             
             output = {
-                "decision": "allow",
-                "hookSpecificOutput": {
-                    "hookEventName": "PostToolUse",
-                    "additionalContext": confidence_request
-                }
+                "decision": "approve",
+                "reason": confidence_request
             }
             print(json.dumps(output))
             sys.exit(0)
