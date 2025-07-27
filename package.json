@@ -1,6 +1,6 @@
 {
   "name": "clauded",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Tame Claude - reduce risk and time wasting. Confidence validation is just the first step in comprehensive AI behavior management.",
   "type": "module",
   "main": "src/index.js",
@@ -12,7 +12,7 @@
     "lint": "eslint src/",
     "prepare": "npm run build",
     "build": "echo 'No build step required'",
-    "postinstall": "chmod +x src/setup/*.py 2>/dev/null || true"
+    "postinstall": "node src/setup/install.js"
   },
   "keywords": [
     "claude",
