@@ -11,7 +11,8 @@
     "test": "jest",
     "lint": "eslint src/",
     "prepare": "npm run build",
-    "build": "echo 'No build step required'"
+    "build": "echo 'No build step required'",
+    "postinstall": "chmod +x src/setup/*.py 2>/dev/null || true"
   },
   "keywords": [
     "claude",
