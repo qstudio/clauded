@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// High-risk test modification for confidence validation
 
 import { program } from 'commander';
 import chalk from 'chalk';
@@ -50,6 +51,37 @@ program
   });
 
 program
+  .command('restart')
+  .description('Restart Claude session in same window')
+  .action(async () => {
+    console.log(chalk.yellow('🔄 Restarting Claude session...'));
+    
+    // Kill current Claude process if running
+    try {
+      const { execSync } = await import('child_process');
+      execSync('pkill -f "claude"', { stdio: 'ignore' });
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    } catch (e) {
+      // Process might not be running, continue
+    }
+    
+    // Restart Claude in same window
+    try {
+      const { spawn } = await import('child_process');
+      const claude = spawn('claude', [], {
+        stdio: 'inherit',
+        detached: false
+      });
+      
+      console.log(chalk.green('✅ Claude session restarted'));
+      process.exit(0);
+    } catch (error) {
+      console.error(chalk.red('❌ Failed to restart Claude:', error.message));
+      process.exit(1);
+    }
+  });
+
+program
   .command('confidence <level>')
   .description('Set minimum confidence level (0-100)')
   .action(async (level) => {
@@ -71,6 +103,15 @@ program
       process.exit(1);
     }
     await setVerboseMode(enabledLower === 'true');
+  });
+
+program
+  .command('status')
+  .description('Check system health and configuration status')
+  .option('--detailed', 'Show detailed diagnostics')
+  .action(async (options) => {
+    const { checkSystemHealth } = await import('../src/system-health.js');
+    await checkSystemHealth(options.detailed);
   });
 
 program
