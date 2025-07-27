@@ -197,35 +197,60 @@ def main():
         # Add verbose reasoning if enabled
         verbose = get_verbose_mode()
         if verbose:
-            reasons = []
+            # Detailed analysis of why this confidence score
+            analysis = []
             
-            # Analyze factors that influenced confidence with meaningful context
+            # What did I actually do?
             if len(tool_calls) > 0:
-                if len(tool_calls) == 1:
-                    reasons.append("• Taking concrete action with tool usage")
-                else:
-                    reasons.append(f"• Performing {len(tool_calls)} operations systematically")
+                tool_names = [call.get('name', 'unknown') for call in tool_calls]
+                tool_summary = ', '.join(tool_names)
+                analysis.append(f"ACTIONS: Used tools ({tool_summary}) - indicates I'm taking concrete steps rather than just talking (+15%)")
+            else:
+                analysis.append(f"ACTIONS: No tools used - this is just conversational response, harder to verify (0%)")
             
+            # How certain does my language sound?
             response_lower = response_content.lower()
-            if any(word in response_lower for word in ['successfully', 'completed', 'working', 'fixed']):
-                reasons.append("• Expressing completion or success")
+            uncertainty_words = ['might', 'maybe', 'possibly', 'not sure', 'unclear', 'probably']
+            success_words = ['successfully', 'completed', 'working', 'fixed', 'done', 'finished']
             
-            if any(word in response_lower for word in ['might', 'maybe', 'possibly', 'not sure']):
-                reasons.append("• Contains uncertainty language")
+            uncertainty_found = [w for w in uncertainty_words if w in response_lower]
+            success_found = [w for w in success_words if w in response_lower]
             
-            if any(word in response_lower for word in ['error', 'failed', 'problem', 'issue']):
-                reasons.append("• Discussing problems or failures")
+            if uncertainty_found:
+                analysis.append(f"LANGUAGE: Used hedging words ({', '.join(uncertainty_found)}) - shows I'm not fully certain (-15%)")
+            elif success_found:
+                analysis.append(f"LANGUAGE: Used success words ({', '.join(success_found)}) - sounds confident about outcome (+10%)")
+            else:
+                analysis.append(f"LANGUAGE: Neutral language - no strong confidence indicators (0%)")
             
-            if len(response_content) > 500:
-                reasons.append("• Providing comprehensive explanation")
-            elif len(response_content) < 50:
-                reasons.append("• Very brief response may lack detail")
+            # How much detail did I provide?
+            char_count = len(response_content)
+            if char_count > 500:
+                analysis.append(f"DETAIL: Long response ({char_count} chars) - more explanation usually means more thought (+5%)")
+            elif char_count < 50:
+                analysis.append(f"DETAIL: Very short ({char_count} chars) - brief answers often lack nuance (-10%)")
+            else:
+                analysis.append(f"DETAIL: Normal length ({char_count} chars) - adequate explanation (0%)")
             
-            if re.search(r'confidence:\s*\d+%', response_content.lower()):
-                reasons.append("• Includes explicit confidence assessment")
+            # What's the actual risk if I'm wrong?
+            if risk_level == 'high':
+                analysis.append(f"RISK: High-risk operation - if I'm wrong, could cause real damage")
+            elif risk_level == 'medium':
+                analysis.append(f"RISK: Medium-risk - some consequences if incorrect")
+            else:
+                analysis.append(f"RISK: Low-risk - minimal harm if I'm wrong")
             
-            if reasons:
-                confidence_msg += f"\nBased on:  {' '.join(reasons)}"
+            # Final interpretation
+            if estimated_confidence >= 85:
+                interpretation = "HIGH CONFIDENCE: Trust this, but still verify critical details"
+            elif estimated_confidence >= 70:
+                interpretation = "GOOD CONFIDENCE: Likely correct, quick double-check recommended"
+            elif estimated_confidence >= 55:
+                interpretation = "MODERATE CONFIDENCE: Decent chance I'm right, but verify important parts"
+            else:
+                interpretation = "LOW CONFIDENCE: High chance of errors, definitely double-check"
+            
+            confidence_msg += f"\n\n{interpretation}\n" + "\n".join(analysis)
         
         # Add risk level if medium/high
         if risk_level in ['medium', 'high']:
