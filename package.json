@@ -1,6 +1,6 @@
 {
   "name": "clauded",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Tame Claude - reduce risk and time wasting. Confidence validation is just the first step in comprehensive AI behavior management.",
   "type": "module",
   "main": "src/index.js",
