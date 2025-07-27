@@ -201,27 +201,31 @@ async function updateClaudeSettings() {
       settings.hooks.Notification = [];
     }
         
-    // Check if validator hook is already registered
+    // Define hook paths
     const validatorPath = path.join(homedir(), '.claude', 'clauded', 'hooks', 'confidence-validator.py');
-    const existingValidatorHook = settings.hooks.UserPromptSubmit.find(hookGroup => 
-      hookGroup.hooks && hookGroup.hooks.some(hook => 
-        hook.command === validatorPath
-      )
-    );
-        
-    // Check if scorer hook is already registered
     const scorerPath = path.join(homedir(), '.claude', 'clauded', 'hooks', 'confidence-scorer.py');
-    const existingScorerHook = settings.hooks.PostToolUse.find(hookGroup => 
-      hookGroup.hooks && hookGroup.hooks.some(hook => 
-        hook.command === scorerPath
-      )
-    );
-        
-    // Check if confidence display hook is already registered
     const displayPath = path.join(homedir(), '.claude', 'clauded', 'hooks', 'confidence-score-display.py');
-    const existingDisplayHook = settings.hooks.UserPromptSubmit.find(hookGroup => 
+    const unifiedPath = path.join(homedir(), '.claude', 'clauded', 'hooks', 'confidence-unified-prompt.py');
+    
+    // Remove old hooks from UserPromptSubmit
+    const oldHookPaths = [validatorPath, displayPath];
+    settings.hooks.UserPromptSubmit = settings.hooks.UserPromptSubmit.filter(hookGroup => {
+      if (!hookGroup.hooks) return true;
+      hookGroup.hooks = hookGroup.hooks.filter(hook => !oldHookPaths.includes(hook.command));
+      return hookGroup.hooks.length > 0;
+    });
+    
+    // Remove old scorer hook from PostToolUse
+    settings.hooks.PostToolUse = settings.hooks.PostToolUse.filter(hookGroup => {
+      if (!hookGroup.hooks) return true;
+      hookGroup.hooks = hookGroup.hooks.filter(hook => hook.command !== scorerPath);
+      return hookGroup.hooks.length > 0;
+    });
+    
+    // Check if unified hook is already registered
+    const existingUnifiedHook = settings.hooks.UserPromptSubmit.find(hookGroup => 
       hookGroup.hooks && hookGroup.hooks.some(hook => 
-        hook.command === displayPath
+        hook.command === unifiedPath
       )
     );
     
@@ -233,54 +237,21 @@ async function updateClaudeSettings() {
       )
     );
         
-    let modified = false;
+    let modified = true; // Always true since we cleaned up old hooks
         
-    if (!existingValidatorHook) {
-      // Add confidence validator hook to UserPromptSubmit
+    if (!existingUnifiedHook) {
+      // Add unified confidence hook to UserPromptSubmit
       settings.hooks.UserPromptSubmit.push({
         hooks: [
           {
             type: 'command',
-            command: validatorPath
+            command: unifiedPath
           }
         ]
       });
-      modified = true;
-      console.log('✅ Confidence validator hook added to UserPromptSubmit');
+      console.log('✅ Unified confidence hook added to UserPromptSubmit');
     } else {
-      console.log('✅ Confidence validator hook already registered');
-    }
-        
-    if (!existingScorerHook) {
-      // Add confidence scorer hook to PostToolUse
-      settings.hooks.PostToolUse.push({
-        hooks: [
-          {
-            type: 'command',
-            command: scorerPath
-          }
-        ]
-      });
-      modified = true;
-      console.log('✅ Confidence scorer hook added to PostToolUse');
-    } else {
-      console.log('✅ Confidence scorer hook already registered');
-    }
-        
-    if (!existingDisplayHook) {
-      // Add confidence score display hook to UserPromptSubmit
-      settings.hooks.UserPromptSubmit.push({
-        hooks: [
-          {
-            type: 'command',
-            command: displayPath
-          }
-        ]
-      });
-      modified = true;
-      console.log('✅ Confidence score display hook added to UserPromptSubmit');
-    } else {
-      console.log('✅ Confidence score display hook already registered');
+      console.log('✅ Unified confidence hook already registered');
     }
     
     if (!existingNotificationHook) {
