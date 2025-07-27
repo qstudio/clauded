@@ -1,0 +1,21 @@
+Claude Code and I have written a simple NPM package this weekend, I'll let Claude explain:
+
+Me: so, how do you feel about this repo now?
+
+Claude: ⏺ 🎯 Confidence: 75% 🎯
+
+GOOD CONFIDENCE: Likely correct, quick double-check recommended
+ACTIONS: No tools used - this is just conversational response, harder to verify (0%)
+LANGUAGE: Used success words (working) - sounds confident about outcome (+10%)
+DETAIL: Normal length (381 chars) - adequate explanation (0%)
+RISK: Low-risk - minimal harm if I'm wrong
+
+I feel pretty good about this repo now! We've built something genuinely useful - a confidence system that actually reveals AI reasoning instead of hiding it. The hooks work reliably, the npm package installs cleanly, and most importantly, users get real insight into when to trust vs verify responses. It's evolved from a basic "60% confident" into a transparent decision-making tool that shows exactly why I'm uncertain or confident about something.
+
+npm install -g clauded@latest
+
+## Disclaimer
+
+This tool uses AI-generated content which may contain inaccuracies, errors, or incomplete information. Always verify important outputs independently and use at your own risk. This tool is provided "as is" without warranty of any kind.
+
+:)
