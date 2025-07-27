@@ -96,10 +96,18 @@ def main():
         # Read JSON input from stdin
         input_data = json.load(sys.stdin)
         debug_log(f"Received input: {list(input_data.keys())}")
+        debug_log(f"Full input data structure: {json.dumps(input_data, indent=2)}")
         
-        # Extract response and tool calls
+        # Extract response and tool calls - try multiple possible locations
         response = input_data.get('response', {})
         tool_calls = input_data.get('tool_calls', [])
+        
+        # Also check for tool information in other locations
+        tool_name = input_data.get('tool_name', '')
+        tool_input = input_data.get('tool_input', {})
+        tool_response = input_data.get('tool_response', '')
+        
+        debug_log(f"Direct tool info: name='{tool_name}', input_keys={list(tool_input.keys()) if isinstance(tool_input, dict) else 'not_dict'}")
         
         # Get response content
         response_content = response.get('content', '')
@@ -113,21 +121,34 @@ def main():
         
         debug_log(f"Response content length: {len(response_content)}")
         debug_log(f"Tool calls count: {len(tool_calls)}")
+        debug_log(f"Tool name from input: '{tool_name}'")
         
-        # Skip if no meaningful content
-        if not response_content.strip():
-            debug_log("No response content, skipping")
+        # Check if we have any tool usage to analyze
+        has_response_content = bool(response_content.strip())
+        has_direct_tool = bool(tool_name.strip())
+        
+        if not has_response_content and not has_direct_tool:
+            debug_log("No response content or tool usage detected, skipping")
             sys.exit(0)
         
-        # Check if confidence already exists
-        has_confidence = re.search(r'confidence:\s*\d+%', response_content.lower())
-        if has_confidence:
-            debug_log("Confidence already present, skipping")
-            sys.exit(0)
+        # Check if confidence already exists in response
+        has_confidence = False
+        if has_response_content:
+            has_confidence = re.search(r'confidence:\s*\d+%', response_content.lower())
+            if has_confidence:
+                debug_log("Confidence already present in response, skipping")
+                sys.exit(0)
         
-        # Analyze operation risk level
-        risk_level, risk_details = analyze_operation_risk(response_content, tool_calls)
-        debug_log(f"Operation risk level: {risk_level}")
+        # Analyze operation risk level using both response content and direct tool info
+        if has_direct_tool:
+            # Create a synthetic tool_calls structure for the risk analyzer
+            synthetic_tool_calls = [{'function': {'name': tool_name}}]
+            risk_level, risk_details = analyze_operation_risk(f"Used tool: {tool_name}", synthetic_tool_calls)
+            debug_log(f"Risk level based on direct tool '{tool_name}': {risk_level}")
+        else:
+            # Fall back to analyzing response content
+            risk_level, risk_details = analyze_operation_risk(response_content, tool_calls)
+            debug_log(f"Risk level based on response content: {risk_level}")
         
         # Skip if no risky operations detected
         if risk_level == 'none':
