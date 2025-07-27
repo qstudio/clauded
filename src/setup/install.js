@@ -41,12 +41,13 @@ async function main() {
             console.log('✅ clauded hooks installed successfully!');
             
             // Show new features for this version
-            console.log('\n🆕 New in v1.1.2:');
-            console.log('   • Confidence evaluation now shows on ALL assistant responses');
-            console.log('   • Clear explanations: "Good confidence - likely correct"');
-            console.log('   • Calculation breakdown: "Base: 60% +15% (took action)"');
-            console.log('   • Fixed import issues that caused hook failures');
-            console.log('\n💡 Tip: Confidence helps you know when to double-check responses!');
+            console.log('\n🆕 New in v1.2.0:');
+            console.log('   • Deep confidence analysis reveals AI reasoning process');
+            console.log('   • Shows exactly which words/actions influenced confidence');
+            console.log('   • Risk assessment: "if I\'m wrong, could cause real damage"');
+            console.log('   • Language analysis: hedging vs success words');
+            console.log('   • Response length and detail evaluation');
+            console.log('\n💡 Enable verbose mode to see the full AI decision breakdown!');
         } else {
             console.log('⚠️  Installer script not found, skipping hook installation');
         }
