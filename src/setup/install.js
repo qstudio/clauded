@@ -12,7 +12,7 @@ import fs from 'fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-function main() {
+async function main() {
     try {
         console.log('📦 Setting up clauded hooks...');
         
