@@ -1,0 +1,47 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/ray/Sites/npm-clauded/test-install/src/setup/confidence-unified-posttool.py"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/ray/Sites/npm-clauded/test-install/src/setup/confidence-unified-posttool.py"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/ray/Sites/npm-clauded/test-install/src/setup/confidence-unified-prompt.py"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/ray/Sites/npm-clauded/test-install/src/setup/confidence-notification-hook.py"
+          }
+        ]
+      }
+    ]
+  }
+}

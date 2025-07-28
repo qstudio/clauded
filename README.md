@@ -2,6 +2,8 @@
 
 > **A comprehensive framework to control and guide Claude's behavior for safety and productivity**
 
+**Latest Update:** Added CLAUDED! marker to all Claude outputs for better visibility and testing.
+
 ## 🎯 **Core Goals**
 
 Clauded is a **Claude Taming System** designed to make Claude more thoughtful, transparent, and reliable. It's not about blocking responses, but about enhancing them with self-evaluation and confidence scoring.

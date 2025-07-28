@@ -142,26 +142,13 @@ export async function getConfidenceLevel() {
 
 async function updateValidatorConfidence(level) {
   try {
-    await debugLog(`Updating validator script with confidence level ${level}%`);
-    const validatorPath = path.join(CLAUDE_DIR, 'clauded', 'hooks', 'confidence-validator.py');
-    
-    // Read current validator
-    let validatorContent = await fs.readFile(validatorPath, 'utf8');
-    
-    // Update the confidence threshold in the validator
-    validatorContent = validatorContent.replace(
-      /min_confidence = \d+/,
-      `min_confidence = ${level}`
-    );
-    
-    // Write updated validator
-    await fs.writeFile(validatorPath, validatorContent);
-    await debugLog('Successfully updated validator script');
-    
-    console.log(chalk.green('✓ Updated confidence validator with new threshold'));
+    await debugLog(`Confidence level updated to ${level}% in config file`);
+    // The unified scripts use the config cache system, so they will automatically
+    // pick up the new confidence level from the config file we just updated
+    console.log(chalk.green('✓ Confidence threshold updated in configuration'));
   } catch (error) {
-    await debugLog(`WARNING: Could not update validator: ${error.message}`);
-    console.log(chalk.yellow('⚠️  Could not update validator (may not be installed yet)'));
+    await debugLog(`WARNING: Could not update confidence configuration: ${error.message}`);
+    console.log(chalk.yellow('⚠️  Could not update configuration (may not be installed yet)'));
   }
 }
 

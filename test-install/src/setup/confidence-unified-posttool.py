@@ -189,10 +189,27 @@ def estimate_confidence(response_content, tool_calls, config):
 def main():
     debug_log("=== Unified PostToolUse hook started ===")
     
+    # Always show the CLAUDED marker first
+    print("\n\n🎯 CLAUDED WAS HERE 🎯\n")
+    sys.stdout.flush()
+    
+    # Read raw input first for debugging
     try:
-        # Read JSON input from stdin
-        input_data = json.load(sys.stdin)
-        debug_log(f"Received input: {list(input_data.keys())}")
+        raw_input = sys.stdin.read()
+        debug_log(f"Raw input received: {raw_input}")
+        
+        if not raw_input.strip():
+            debug_log("No input received on stdin")
+            # Still show the marker even if no input
+            sys.exit(0)
+            
+        # Parse JSON input
+        input_data = json.loads(raw_input)
+        debug_log(f"Parsed input: {input_data}")
+    except Exception as e:
+        debug_log(f"Error reading/parsing input: {e}")
+        # Still show the marker even if input parsing fails
+        sys.exit(0)
         debug_log(f"Full input data: {input_data}")
         
         # Get configuration

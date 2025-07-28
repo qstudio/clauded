@@ -95,7 +95,7 @@ export async function installClaudedSystem(config) {
     await installUnifiedPostToolHook(config);
     
     // Install clauded command script
-    await installClaudedCommand();
+    await installClaudedCommand(config);
     
     // Update Claude settings to include all hooks
     await updateClaudeSettings();
@@ -232,16 +232,65 @@ async function installConfidenceNotificationHook() {
   }
 }
 
-async function installClaudedCommand() {
+async function installClaudedCommand(config) {
   const commandPath = path.join(CLAUDED_DIR, 'scripts', 'clauded');
-  const sourcePath = path.join(process.cwd(), 'bin', 'clauded.js');
+  const srcDirPath = path.join(CLAUDED_DIR, 'src');
+  const packageJsonPath = path.join(CLAUDED_DIR, 'package.json');
+  
+  // Determine source paths based on installation mode
+  let sourcePath, srcSourcePath, packageJsonSource;
+  
+  if (config.npmPackageRoot) {
+    // Production mode: use npmPackageRoot
+    sourcePath = path.join(config.npmPackageRoot, 'bin', 'clauded.js');
+    srcSourcePath = path.join(config.npmPackageRoot, 'src');
+    packageJsonSource = path.join(config.npmPackageRoot, 'package.json');
+  } else {
+    // Development mode: use current script location
+    sourcePath = path.join(process.cwd(), 'bin', 'clauded.js');
+    srcSourcePath = path.join(process.cwd(), 'src');
+    packageJsonSource = path.join(process.cwd(), 'package.json');
+  }
   
   try {
-    // Copy the clauded.js file to the scripts directory
-    await fs.copyFile(sourcePath, commandPath);
-    console.log(chalk.green('✓ Installed clauded command'));
+    if (config.isDevelopment) {
+      // Development mode: create symlinks
+      try {
+        await fs.unlink(commandPath);
+        await fs.rm(srcDirPath, { recursive: true, force: true });
+        await fs.unlink(packageJsonPath);
+      } catch (e) {
+        // Files don't exist, that's ok
+      }
+      await fs.symlink(sourcePath, commandPath);
+      await fs.symlink(srcSourcePath, srcDirPath);
+      await fs.symlink(packageJsonSource, packageJsonPath);
+      console.log(chalk.green('✓ Symlinked clauded command for development'));
+    } else {
+      // Production mode: copy files
+      await fs.copyFile(sourcePath, commandPath);
+      await fs.chmod(commandPath, 0o755); // Make executable
+      
+      // Copy entire src directory
+      await fs.cp(srcSourcePath, srcDirPath, { recursive: true });
+      
+      // Copy package.json
+      await fs.copyFile(packageJsonSource, packageJsonPath);
+      
+      // Install dependencies in the clauded directory
+      const { execSync } = await import('child_process');
+      try {
+        execSync('npm install --production', { 
+          cwd: CLAUDED_DIR, 
+          stdio: 'pipe' 
+        });
+        console.log(chalk.green('✓ Installed clauded command with dependencies'));
+      } catch (error) {
+        console.log(chalk.yellow('⚠️  Could not install dependencies, command may not work properly'));
+      }
+    }
   } catch (error) {
-    console.log(chalk.yellow('⚠️  Could not install clauded command (using npm link instead)'));
+    console.log(chalk.yellow(`⚠️  Could not install clauded command: ${error.message}`));
   }
 }
 
