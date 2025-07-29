@@ -203,23 +203,6 @@ def main():
     print("\n\n🎯 CLAUDED WAS HERE 🎯\n")
     sys.stdout.flush()
     
-    # Debug: log what we received
-    try:
-        raw_input = sys.stdin.read()
-        debug_log(f"Raw input received: {raw_input}")
-        
-        if not raw_input.strip():
-            debug_log("No input received on stdin")
-            # Still show the marker even if no input
-            sys.exit(0)
-            
-        input_data = json.loads(raw_input)
-        debug_log(f"Parsed input: {input_data}")
-    except Exception as e:
-        debug_log(f"Error reading/parsing input: {e}")
-        # Still show the marker even if input parsing fails
-        sys.exit(0)
-    
     try:
         # Read JSON input from stdin
         input_data = json.load(sys.stdin)

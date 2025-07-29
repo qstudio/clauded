@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/ray/Sites/npm-clauded/src/setup/confidence-unified-posttool.py"
+            "command": "/Users/ray/Sites/npm-clauded/test-install/src/setup/confidence-unified-posttool.py"
           }
         ]
       }
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/ray/Sites/npm-clauded/src/setup/confidence-unified-posttool.py"
+            "command": "/Users/ray/Sites/npm-clauded/test-install/src/setup/confidence-unified-posttool.py"
           }
         ]
       }
@@ -28,7 +28,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/ray/Sites/npm-clauded/src/setup/confidence-unified-prompt.py"
+            "command": "/Users/ray/Sites/npm-clauded/test-install/src/setup/confidence-unified-prompt.py"
           }
         ]
       }
@@ -38,7 +38,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/ray/Sites/npm-clauded/src/setup/confidence-notification-hook.py"
+            "command": "/Users/ray/Sites/npm-clauded/test-install/src/setup/confidence-notification-hook.py"
           }
         ]
       }

@@ -199,6 +199,36 @@ def main():
         config = get_config()
         min_confidence = config.get('minConfidence', 50)
         
+        # Check if this is a Stop hook to prevent loops
+        hook_event_name = input_data.get('hook_event_name', '')
+        if hook_event_name == 'Stop':
+            debug_log("Stop hook detected - checking if confidence already present")
+            # For Stop hook, add confidence for all responses that don't have it
+            transcript_path = input_data.get('transcript_path')
+            if transcript_path:
+                response_content = get_last_assistant_response(transcript_path) or ""
+                if re.search(r'confidence:\s*\d+%', response_content.lower()):
+                    debug_log("Confidence already present in Stop hook, skipping")
+                    sys.exit(0)
+                else:
+                    debug_log("No confidence found in Stop hook, adding confidence")
+                    # Calculate confidence for the response
+                    estimated_confidence = estimate_confidence(response_content, [], config)
+                    confidence_msg = f"\n\n🎯 Confidence: {estimated_confidence}% 🎯\n"
+                    if config.get('verbose', True):
+                        confidence_msg += f"(Stop hook confidence for response)\n"
+                    # Try direct output first, then JSON
+                    print(confidence_msg)
+                    output = {
+                        "decision": "approve",
+                        "append_message": confidence_msg
+                    }
+                    print(json.dumps(output))
+                    sys.exit(0)
+            else:
+                debug_log("No transcript path in Stop hook, skipping")
+                sys.exit(0)
+        
         # PostToolUse hook gets individual tool info, not full tool_calls array
         tool_name = input_data.get('tool_name', '')
         tool_calls = [{'name': tool_name}] if tool_name else []
@@ -219,15 +249,22 @@ def main():
         debug_log(f"Response content length: {len(response_content)}")
         debug_log(f"Tool calls count: {len(tool_calls)}")
         
-        # Skip if no meaningful content
+        # ALWAYS show confidence for ALL responses (user requirement)
         if not response_content.strip():
-            debug_log("No response content, skipping")
+            debug_log("No response content, showing minimal confidence")
+            # For tool usage, show higher confidence even with no content
+            tool_confidence = 75 if len(tool_calls) > 0 else 50
+            output = {
+                "decision": "approve",
+                "append_message": f"\n\n🎯 Confidence: {tool_confidence}% 🎯\n(Tool operation completed - {len(tool_calls)} tools used)\n"
+            }
+            print(json.dumps(output))
             sys.exit(0)
         
-        # Check if confidence already exists
+        # ALWAYS show confidence for ALL responses (user requirement)
+        # Check if confidence already exists but still show it
         if re.search(r'confidence:\s*\d+%', response_content.lower()):
-            debug_log("Confidence already present, skipping")
-            sys.exit(0)
+            debug_log("Confidence already present, but showing anyway per user requirement")
         
         # Always show confidence for all responses
         debug_log("Processing response for confidence display")
@@ -309,14 +346,21 @@ def main():
         if risk_level in ['medium', 'high']:
             confidence_msg += f" (Risk: {risk_level})"
         
-        # For high-risk operations with low confidence, still block
+        # For high-risk operations with low confidence, check if user already provided confidence
         if risk_level == 'high' and estimated_confidence < min_confidence:
-            output = {
-                "decision": "block",
-                "reason": f"🎯 **MANDATORY CONFIDENCE REQUIRED**\n\nThis operation involves high-risk changes (file edits, system commands, deletions).\n\n**Please add explicit confidence to your response:**\n`Confidence: X% - [your reasoning]`\n\n**Then submit your response again.**"
-            }
-            print(json.dumps(output))
-            sys.exit(1)
+            # Check if user already provided explicit confidence
+            if re.search(r'confidence:\s*\d+%', response_content.lower()):
+                debug_log("User provided explicit confidence, allowing despite low estimated confidence")
+                # Allow through but show warning
+                confidence_msg += f"\n\n⚠️ WARNING: Your explicit confidence overrides the system's low estimate"
+            else:
+                # Block and require explicit confidence
+                output = {
+                    "decision": "block",
+                    "reason": f"🎯 **MANDATORY CONFIDENCE REQUIRED**\n\nThis operation involves high-risk changes (file edits, system commands, deletions).\n\n**Please add explicit confidence to your response:**\n`Confidence: X% - [your reasoning]`\n\n**Then submit your response again.**"
+                }
+                print(json.dumps(output))
+                sys.exit(1)
         
         # Standard approval with confidence display
         output = {
